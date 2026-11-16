@@ -225,6 +225,7 @@ export const dict: Record<string, [string, string]> = {
   'c.job': ['Job', 'アルバイト先'],
   'c.note': ['Note', 'メモ'],
   'c.status': ['Status', '状態'],
+  'c.role': ['Role', '役割'],
   'c.comment': ['Comment', 'コメント'],
   'c.total': ['Total', '合計'],
   'c.prev': ['Previous', '前へ'],

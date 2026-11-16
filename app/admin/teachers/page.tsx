@@ -28,7 +28,7 @@ export default async function AdminTeachers() {
               <Field label={`${t('login.email')} *`}><Input name="email" type="email" required /></Field>
               <Field label={`${t('admin.tempPassword')} *`}><Input name="password" type="text" minLength={8} required autoComplete="off" /></Field>
               <Field label={t('admin.staffNo')}><Input name="staff_no" /></Field>
-              <Field label={t('c.status')}>
+              <Field label={t('c.role')}>
                 <Select name="role" defaultValue="teacher">
                   <option value="teacher">{t('role.teacher')}</option>
                   <option value="admin">{t('role.admin')}</option>

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "node scripts/seed.mjs",
+    "clean-demo": "node scripts/clean-demo.mjs",
     "test:db": "node scripts/test-compliance.mjs"
   },
   "dependencies": {
