@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { -webkit-text-size-adjust: 100%; }
+body { background: #f8fafc; }
+input[type='time'], input[type='date'] { min-height: 2.5rem; }
+@media print {
+  aside, header, .no-print { display: none !important; }
+  .lg\:pl-60 { padding-left: 0 !important; }
+}
