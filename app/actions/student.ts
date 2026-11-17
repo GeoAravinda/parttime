@@ -46,17 +46,20 @@ export async function deleteRecord(_: ActionState, fd: FormData): Promise<Action
   return done('Deleted / 削除しました');
 }
 
-/** Submit every draft / rejected record in the week (Mon..Sun). */
+/** Submit every draft / rejected record in the shown period (a week, or a month up to 31 days). */
 export async function submitWeek(_: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireRole('student');
-  const monday = str(fd, 'week');
-  if (!isYmd(monday)) return { error: 'Invalid week' };
+  const from = str(fd, 'week');
+  const toRaw = str(fd, 'to');
+  if (!isYmd(from)) return { error: 'Invalid period' };
+  const to = isYmd(toRaw) ? toRaw : addDaysYmd(from, 6);
+  if (to < from || to > addDaysYmd(from, 30)) return { error: 'Invalid period' };
   const supabase = await createClient();
   const { data, error } = await supabase.from('work_records').update({ status: 'submitted' })
     .eq('student_id', user.id).in('status', ['draft', 'rejected'])
-    .gte('work_date', monday).lte('work_date', addDaysYmd(monday, 6)).select('id');
+    .gte('work_date', from).lte('work_date', to).select('id');
   if (error) return { error: friendlyError(error) };
-  if (!data?.length) return { error: 'Nothing to submit this week. / 提出する記録はありません。' };
+  if (!data?.length) return { error: 'Nothing to submit in this period. / 提出する記録はありません。' };
   return done(`${data.length} record(s) submitted / ${data.length}件を提出しました`);
 }
 

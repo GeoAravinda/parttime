@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Plus, Send, Trash2, X, Lock, MessageSquareWarning } from 'lucide-react';
 import type { ComplianceDay, Job, WorkRecord } from '@/lib/types';
@@ -26,6 +26,16 @@ export function WeekSheet({ monday, days, records, jobs, editable, today, prevHr
   const [editing, setEditing] = useState<Editing>(null);
   const cols = jobs.filter((j) => j.status === 'active' || records.some((r) => r.job_id === j.id));
   const weekTotal = days.reduce((s, d) => s + d.day_hours, 0);
+  const lastDay = days[days.length - 1]?.day ?? monday;
+  const isMonth = days.length > 7;
+  // In month view, a thicker line before each Monday shows the calendar weeks
+  const weekStart = (day: string, i: number) => isMonth && i > 0 && new Date(day + 'T00:00').getDay() === 1;
+  // Long month lists: jump to today's row on open
+  useEffect(() => {
+    if (isMonth) document.querySelectorAll(`[data-day="${today}"]`).forEach((el) => {
+      if ((el as HTMLElement).offsetParent) el.scrollIntoView({ block: 'center' });
+    });
+  }, [isMonth, today, monday]);
   const canSubmit = editable && records.some((r) => r.status === 'draft' || r.status === 'rejected');
   const cell = (day: string, jobId: string) => records.filter((r) => r.work_date === day && r.job_id === jobId);
   const isLocked = (r: WorkRecord) => r.status === 'submitted' || r.status === 'approved';
@@ -71,14 +81,15 @@ export function WeekSheet({ monday, days, records, jobs, editable, today, prevHr
           <Link href={prevHref} className={buttonClass('outline', 'icon')} aria-label={t('c.prev')}><ChevronLeft className="h-4 w-4" /></Link>
           <Link href={todayHref} className={buttonClass('outline', 'sm')}>{t('c.today')}</Link>
           <Link href={nextHref} className={buttonClass('outline', 'icon')} aria-label={t('c.next')}><ChevronRight className="h-4 w-4" /></Link>
-          <span className="ml-2 text-sm font-semibold text-slate-800">{shortDate(monday, lang)} – {shortDate(days[6]?.day ?? monday, lang)}</span>
+          <span className="ml-2 text-sm font-semibold text-slate-800">{shortDate(monday, lang)} – {shortDate(lastDay, lang)}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-600">{t('sheet.weekTotal')}: <b>{fmtH(weekTotal)} h</b></span>
+          <span className="text-sm text-slate-600">{t(isMonth ? 'sheet.monthTotal' : 'sheet.weekTotal')}: <b>{fmtH(weekTotal)} h</b></span>
           {canSubmit && (
-            <ActionForm action={submitWeek} confirm={t('sheet.submitConfirm')} hideMessage>
+            <ActionForm action={submitWeek} confirm={t(isMonth ? 'sheet.submitMonthConfirm' : 'sheet.submitConfirm')} hideMessage>
               <input type="hidden" name="week" value={monday} />
-              <SubmitButton size="sm"><Send className="h-4 w-4" />{t('sheet.submitWeek')}</SubmitButton>
+              <input type="hidden" name="to" value={lastDay} />
+              <SubmitButton size="sm"><Send className="h-4 w-4" />{t(isMonth ? 'sheet.submitMonth' : 'sheet.submitWeek')}</SubmitButton>
             </ActionForm>
           )}
         </div>
@@ -104,8 +115,8 @@ export function WeekSheet({ monday, days, records, jobs, editable, today, prevHr
             </tr>
           </thead>
           <tbody>
-            {days.map((d) => (
-              <tr key={d.day} className={cn(d.day === today && 'bg-primary-50/40')}>
+            {days.map((d, i) => (
+              <tr key={d.day} data-day={d.day} className={cn(d.day === today && 'bg-primary-50/40', weekStart(d.day, i) && '[&>td]:border-t-2 [&>td]:border-t-slate-300')}>
                 <td className="border-b border-slate-100 px-3 py-2 align-top">
                   <span className={cn('font-medium', [0, 6].includes(new Date(d.day + 'T00:00').getDay()) && 'text-rose-600')}>{shortDate(d.day, lang)}</span>
                   {d.is_holiday && <Badge tone="yellow" className="mt-1">{t('sheet.vacation')}</Badge>}
@@ -132,10 +143,10 @@ export function WeekSheet({ monday, days, records, jobs, editable, today, prevHr
 
       {/* Mobile: one card per day */}
       <div className="divide-y divide-slate-100 md:hidden">
-        {days.map((d) => {
+        {days.map((d, i) => {
           const recs = records.filter((r) => r.work_date === d.day);
           return (
-            <div key={d.day} className={cn('px-4 py-3', d.day === today && 'bg-primary-50/40')}>
+            <div key={d.day} data-day={d.day} className={cn('px-4 py-3', d.day === today && 'bg-primary-50/40', weekStart(d.day, i) && 'border-t-4 border-t-slate-200')}>
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className={cn('h-2.5 w-2.5 rounded-full', levelDot[d.level])} />
